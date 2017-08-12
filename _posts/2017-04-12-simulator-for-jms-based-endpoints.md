@@ -4,8 +4,6 @@ post_title: Simulator for JMS based endpoints
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2017/04/simulator-for-jms-based-endpoints/
 published: true
 post_date: 2017-04-12 22:59:19
 ---
