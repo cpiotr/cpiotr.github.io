@@ -4,8 +4,6 @@ post_title: SVN w Eclipse Helios
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2011/01/svn-w-eclipse-helios/
 published: true
 post_date: 2011-01-17 03:25:08
 ---

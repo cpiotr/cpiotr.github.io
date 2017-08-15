@@ -4,15 +4,13 @@ post_title: Ekstrakcja tabel z dokumentów
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2011/02/ekstrakcja-tabel-z-dokumentow/
 published: true
 post_date: 2011-02-27 01:09:29
 ---
 Przetwarzanie dokumentów pakietów biurowych MS Office oraz OpenOffice.org może odbywać się przy wykorzystaniu specjalnych bibliotek wspierających każdy z pakietów, odpowiednio: <a href="http://poi.apache.org/">Apache POI</a> oraz <a href="http://odftoolkit.org/">ODF Toolkit</a>. Biblioteki umożliwiają zapis i odczyt dokumentów w formie API dla języka Java.
 
 <strong>Tabele w plikach DOC</strong>
-[sourcecode language="java"]
+```
 HWPFDocument document = new HWPFDocument(new BufferedInputStream(new FileInputStream(file)));
 // Zakresem przetwarzania jest caly dokument
 Range range = document.getOverallRange();
@@ -29,19 +27,19 @@ while (tableIterator.hasNext()) {
 	Table table = tableIterator.next();
 	
 	// Iteracja wierszy
-	for (int rowIndex = 0; rowIndex &lt; table.numRows(); rowIndex++) {
+	for (int rowIndex = 0; rowIndex < table.numRows(); rowIndex++) {
 		TableRow row = table.getRow(rowIndex);
 		
 		// Iteracja komórek
-		for (int cellIndex = 0; cellIndex &lt; row.numCells(); cellIndex++) {
+		for (int cellIndex = 0; cellIndex < row.numCells(); cellIndex++) {
 			TableCell cell = row.getCell(cellIndex);
 			
 			// Iteracja paragrafów
-			for (int parIndex = 0; parIndex &lt; cell.numParagraphs(); parIndex++) {
+			for (int parIndex = 0; parIndex < cell.numParagraphs(); parIndex++) {
 				Paragraph paragraph = cell.getParagraph(parIndex);
 				
 				// Iteracja fragmentów tekstu
-				for (int runIndex = 0; runIndex &lt; paragraph.numCharacterRuns(); runIndex++) {
+				for (int runIndex = 0; runIndex < paragraph.numCharacterRuns(); runIndex++) {
 					CharacterRun run = paragraph.getCharacterRun(runIndex);
 					
 					// Treść tekstu komórki
@@ -51,11 +49,11 @@ while (tableIterator.hasNext()) {
 		}
 	}
 }
-[/sourcecode]
+```
 
 <strong>Tabele w plikach DOCX</strong>
 W przypadku dokumentów w standardzie OOXML API wygląda na przyjemniejsze:
-[sourcecode language="java"]
+```
 XWPFDocument document = new XWPFDocument(new BufferedInputStream(new FileInputStream(file)));
 
 if (document.getTables() != null) {
@@ -75,11 +73,11 @@ if (document.getTables() != null) {
 		}
 	}
 }
-[/sourcecode]
+```
 
 <strong>Tabele w plikach ODT</strong>
 Przetwarzanie dokumentów z pakietu OOo sprowadza się do parsowania XML. Znajomość <a href="http://odftoolkit.org/projects/odfdom/pages/Layers#The_ODF_XML_Layer">struktury dokumentów</a> ułatwia wyodrębnianie kolejno zagnieżdżonych elementów.
-[sourcecode language="java"]
+```
 OdfDocument odfDocument = OdfDocument.loadDocument(file);
 		
 // Pobranie zawartosci w postaci drzewa DOM.
@@ -89,24 +87,24 @@ OdfFileDom odfDOM = odfDocument.getContentDom();
 XPath xpath = odfDocument.getXPath();
 
 // Przeszukiwanie dokumentu pod katem tabel
-NodeList tables = (NodeList) xpath.evaluate(&quot;//table:table&quot;, odfDOM, XPathConstants.NODESET);
+NodeList tables = (NodeList) xpath.evaluate("//table:table", odfDOM, XPathConstants.NODESET);
 
 // Iteracja tabel
-for (int i = 0; i &lt; tables.getLength(); i++) {
+for (int i = 0; i < tables.getLength(); i++) {
 	TableTableElement table = (TableTableElement) tables.item(i);
 	NodeList rows = table.getElementsByTagName(TableTableRowElement.ELEMENT_NAME.getQName());
 	
 	// Iteracja wierszy
-	for (int rowIndex = 0; rowIndex &lt; rows.getLength(); rowIndex++) {
+	for (int rowIndex = 0; rowIndex < rows.getLength(); rowIndex++) {
 		TableTableRowElement row = (TableTableRowElement) rows.item(rowIndex);
 		NodeList cells = row.getElementsByTagName(TableTableCellElement.ELEMENT_NAME.getQName());
 		
 		// Iteracja komórek
-		for (int cellIndex = 0; cellIndex &lt; cells.getLength(); cellIndex++) {
+		for (int cellIndex = 0; cellIndex < cells.getLength(); cellIndex++) {
 			TableTableCellElement cell = (TableTableCellElement) cells.item(cellIndex);
 			// Treść komórki
 			cell.getTextContent();
 		}
 	}
 }
-[/sourcecode]
+```

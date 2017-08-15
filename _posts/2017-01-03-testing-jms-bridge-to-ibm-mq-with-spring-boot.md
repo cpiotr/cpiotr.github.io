@@ -1,13 +1,9 @@
 ---
 ID: 331
-post_title: >
-  Testing JMS bridge to IBM MQ with Spring
-  Boot
+post_title: Testing JMS bridge to IBM MQ with Spring Boot
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2017/01/testing-jms-bridge-to-ibm-mq-with-spring-boot/
 published: true
 post_date: 2017-01-03 21:38:38
 ---
@@ -19,7 +15,7 @@ In one of my previous posts I shortly described, how to get started with <a href
 Configuration is divided into two classes. One is tightly coupled with IBM Websphere MQ and defines a connection factory. The other configuration class defines a number of messaging components that depend on aforementioned factory. 
 There's no need for running IBM MQ instance in tests. An in-memory queuing solution can be used, for example <a href="https://activemq.apache.org/artemis/">Apache ActiveMQ Artemis</a> in embedded mode. Spring Boot provides a starting point for Artemis as starter dependency, which allows automatic detection of dependencies in classpath, important components instantiation and handful of autowiring capabilities. Excellent for testing purposes with low plumbing overhead.
 To get started with Artemis the following dependencies have to declared.
-[sourcecode lang="groovy"]
+```
 dependencies {
 	// ...
 	testCompile 'org.springframework.boot:spring-boot-starter-artemis'
@@ -27,23 +23,23 @@ dependencies {
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
 	testCompile 'org.awaitility:awaitility:2.0.0'
 }
-[/sourcecode]
+```
 
-As a next step the code must somehow indicate that Artemis is supposed to run in embedded mode. To achieve the goal, an entry in <code>application.properties</code> must be added.
-[sourcecode]
+As a next step the code must somehow indicate that Artemis is supposed to run in embedded mode. To achieve the goal, an entry in `application.properties` must be added.
+```
 spring.artemis.mode=embedded
 # ...
-[/sourcecode]
+```
 
 When it comes to configuration classes, only non-IBM-related one can be picked. It will rely on Spring Boot to provide default connection factory to an in-memory queue. We can even extend the configuration class and replace specific beans with the implementation that fits tests better. 
-[sourcecode lang="java"]
+```
 @Configuration
 static class TestConfiguration extends MQConfiguration {
-    List&lt;String&gt; receivedMessages = new CopyOnWriteArrayList&lt;&gt;();
+    List<String> receivedMessages = new CopyOnWriteArrayList<>();
 
     @Override
     @Bean
-    public Consumer&lt;String&gt; messageConsumer() {
+    public Consumer<String> messageConsumer() {
         return receivedMessages::add;
     }
 
@@ -52,10 +48,10 @@ static class TestConfiguration extends MQConfiguration {
     }
 
 }
-[/sourcecode]
+```
 
-<code>SpringBootTest</code> annotation allows limiting set of classes which contains beans definition, so that a single test class populates Spring context only with significant components. It makes tests faster and less error-prone.
-[sourcecode lang="java"]
+`SpringBootTest` annotation allows limiting set of classes which contains beans definition, so that a single test class populates Spring context only with significant components. It makes tests faster and less error-prone.
+```
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { MQGatewayIntegrationTest.TestConfiguration.class, MQGateway.class, MQProperties.class })
 @EnableAutoConfiguration
@@ -67,12 +63,12 @@ public class MQGatewayIntegrationTest {
     @Inject
     TestConfiguration configuration;
 
-    @Value(&quot;${pl.ciruk.blog.mq.incoming-queue}&quot;)
+    @Value("${pl.ciruk.blog.mq.incoming-queue}")
     String queue;
 
     @Test
 	public void shouldReceiveMessageInListener() throws Exception {
-        String message = &quot;This is a test message&quot;;
+        String message = "This is a test message";
 
         jmsTemplate.convertAndSend(queue, message);
         await().atMost(5, TimeUnit.SECONDS)
@@ -83,6 +79,6 @@ public class MQGatewayIntegrationTest {
 
     // ...
 }
-[/sourcecode]
+```
 
 Complete code can be found on <a href="https://github.com/cpiotr/blog/blob/master/blog-code/src/test/java/pl/ciruk/blog/mq/MQGatewayIntegrationTest.java">Github</a>.

@@ -4,8 +4,6 @@ post_title: Parallel queries with Hibernate and C3P0
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2015/02/parallel-queries-with-hibernate-and-c3p0/
 published: true
 post_date: 2015-02-27 11:23:50
 ---
@@ -15,73 +13,73 @@ I've recently encountered a Java 7 application (so no parallel streams at the mo
 Java Mission Control confirmed that most of that time is spent waiting for the database. In this context, the database was read-only. There were no transactions involved, so exploiting multiple threads for parallel reads was a natural step forward.
 
 A number of database sessions is required to execute SQL queries in parallel. Connection pooling mechanism (such as C3P0) allows working with multiple sessions at once.
-[sourcecode]
-&lt;dependency&gt;
-	&lt;groupId&gt;org.hibernate&lt;/groupId&gt;
-	&lt;artifactId&gt;hibernate-c3p0&lt;/artifactId&gt;
-	&lt;version&gt;4.3.8.Final&lt;/version&gt;
-&lt;/dependency&gt;
-[/sourcecode]
+```
+<dependency>
+	<groupId>org.hibernate</groupId>
+	<artifactId>hibernate-c3p0</artifactId>
+	<version>4.3.8.Final</version>
+</dependency>
+```
 
-[sourcecode lang="java"]
+```
 Query idsQuery = entityManager.createNamedQuery(Entity.NamedQueries.GET_ALL_IDS);
 
 return getByIds(idsQuery.getResultList());
-[/sourcecode]
+```
 
-[sourcecode lang="java"]
-private List&lt;Entity&gt; getByIds(List&lt;String&gt; entitiesIds) {
+```
+private List<Entity> getByIds(List<String> entitiesIds) {
 
-	Collection&lt;FetchListOfEntities&gt; tasks = transform(
+	Collection<FetchListOfEntities> tasks = transform(
 			Lists.partition(entitiesIds, 500),
-			new Function&lt;List&lt;String&gt;, FetchListOfEntities&gt;() {
+			new Function<List<String>, FetchListOfEntities>() {
 				@Override
-				public FetchListOfEntities apply(List&lt;String&gt; ids) {
+				public FetchListOfEntities apply(List<String> ids) {
 					return FetchListOfEntities.by(ids);
 				}
 			}
 	);
 
-	List&lt;Entity&gt; entities = Lists.newArrayListWithExpectedSize(entitiesIds.size());
+	List<Entity> entities = Lists.newArrayListWithExpectedSize(entitiesIds.size());
 	try {
-		for (Future&lt;Collection&lt;Entity&gt;&gt; taskResult : executorService.invokeAll(tasks)) {
+		for (Future<Collection<Entity>> taskResult : executorService.invokeAll(tasks)) {
 			entities.addAll(taskResult.get());
 		}
 		executorService.shutdown();
 		executorService.awaitTermination(15L, TimeUnit.SECONDS);
 	} catch (InterruptedException e) {
-		LOG.error(&quot;getByIds - interrupted&quot;, e);
+		LOG.error("getByIds - interrupted", e);
 	} catch (ExecutionException e) {
-		LOG.error(&quot;getByIds - Error in FetchListOfEntities&quot;, e);
+		LOG.error("getByIds - Error in FetchListOfEntities", e);
 	}
 
 	return entities;
 }
-[/sourcecode]
+```
 
-[sourcecode lang="java"]
-public class FetchListOfEntities implements Callable&lt;Collection&lt;Entity&gt;&gt; {
+```
+public class FetchListOfEntities implements Callable<Collection<Entity>> {
 	private EntityManagerFactory emf;
-	private Collection&lt;String&gt; ids;
+	private Collection<String> ids;
 
-	static FetchListOfEntities by(Collection&lt;String&gt; ids) {
+	static FetchListOfEntities by(Collection<String> ids) {
 		FetchListOfEntities worker = new FetchListOfEntities();
 		worker.ids = ids;
 		return worker;
 	}
 
 	@Override
-    public Collection&lt;Entity&gt; call() throws Exception {
+    public Collection<Entity> call() throws Exception {
 		return retrieveEntitiesInSeparateSession();
 	}
 
-	private Collection&lt;Entity&gt; retrieveEntitiesInSeparateSession() {
+	private Collection<Entity> retrieveEntitiesInSeparateSession() {
 		EntityManager em = emf.createEntityManager();
 
-		Collection&lt;Entity&gt; entities = Collections.emptyList();
+		Collection<Entity> entities = Collections.emptyList();
 		try {
 			entities = em.createNamedQuery(Entity.NamedQueries.GET_BY_IDS)
-					.setParameter(&quot;ids&quot;, ids)
+					.setParameter("ids", ids)
 					.getResultList();
 		} finally {
 			em.close();
@@ -89,12 +87,12 @@ public class FetchListOfEntities implements Callable&lt;Collection&lt;Entity&gt;
 		return entities;
 	}
 }
-[/sourcecode]
+```
 
 Such changes resulted in an observable speedup. This time processing took only 7 minutes, given 16 threads were used on a 8-core machine.
 
 Sample C3P0 properties can be found below.
-[sourcecode lang="java"]
+```
 c3p0.acquireIncrement=5
 c3p0.idleConnectionTestPeriod=100
 c3p0.initialPoolSize=20
@@ -104,4 +102,4 @@ c3p0.maxStatements=50
 c3p0.minPoolSize=10
 c3p0.debugUnreturnedConnectionStackTraces=true
 c3p0.unreturnedConnectionTimeout=3600
-[/sourcecode]
+```

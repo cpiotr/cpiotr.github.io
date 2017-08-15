@@ -4,8 +4,6 @@ post_title: Premature Optimization
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2013/06/premature-optimization/
 published: true
 post_date: 2013-06-07 00:07:10
 ---
@@ -13,7 +11,7 @@ Optymalizacja kodu potrafi być jedną z ciekawszych składowych pracy związane
 Optymalizacja nie zawsze ma jednak sens. Donald Knuth określił <a href="http://c2.com/cgi/wiki?PrematureOptimization" target="_blank">przedwczesną optymalizację</a> źródłem wszelkiego zła (<a href="http://en.wikiquote.org/wiki/Donald_Knuth" target="_blank">link</a>). Mało który projekt informatyczny jest odrzucany z powodu słabej wydajności. Przyczyną górującą w niechlubnym rankingu przeszkód w realizacji projektów jest nieterminowość.
 Rozsądne jest zatem podejście spełniające kryterium czasowe: najpierw dostarcz rozwiązanie, potem je optymalizuj. Taki mechanizm rozwiązywania problemów jest wykorzystywany przez człowieka na różnych płaszczyznach życia, gdzie przynosi <a href="http://blog.aaroniba.net/2011/07/06/a-lesson-from-my-ios-users-they-dont-teach-at-mit/" target="_blank">wymierne rezultaty</a>.
 Nie miałbym sobie wiele do zarzucenia, gdybym zawsze postępował w myśl tej prostej zasady. Kiedy zasiadałem do zadania optymalizacji procedury bazodanowej, myślałem, że problem w tym przypadku mnie nie dotyczy. Ktoś w końcu podjął decyzję o konieczności przyspieszenia działania tego fragmentu kodu. Zapomniałem jednak, że mogę w ferworze walki ulepszyć nie to co trzeba.
-Procedura bazodanowa składała się z dwóch zagnieżdżonych pętli, wewnątrz których zbierane były potrzebne dane i następował zapis nowego rekordu do tabeli. Postępując zgodnie z <a href="http://docs.oracle.com/cd/B13789_01/appdev.101/b10807/12_tune.htm" target="_blank">wytycznymi</a>, postanowiłem zredukować zagnieżdżone pętle i zamienić proste iterowanie na zbiorcze pobieranie rekordów z kursora (<code>BULK COLLECT</code>).
+Procedura bazodanowa składała się z dwóch zagnieżdżonych pętli, wewnątrz których zbierane były potrzebne dane i następował zapis nowego rekordu do tabeli. Postępując zgodnie z <a href="http://docs.oracle.com/cd/B13789_01/appdev.101/b10807/12_tune.htm" target="_blank">wytycznymi</a>, postanowiłem zredukować zagnieżdżone pętle i zamienić proste iterowanie na zbiorcze pobieranie rekordów z kursora (`BULK COLLECT`).
 Pchnięty ciekawością, podjąłem decyzję o weryfikacji zastosowanych ulepszeń. O ile redukcja zagnieżdżonych pętli iterujących po kursorach przyniosła zmniejszenie czasu wykonania o rząd wielkości, to zastosowanie zbiorczego pobierania danych miało znikomy efekt. Dlaczego?
 Wykonałem prosty test. Skonstruowałem trzy zapytania SQL:
 <ul>

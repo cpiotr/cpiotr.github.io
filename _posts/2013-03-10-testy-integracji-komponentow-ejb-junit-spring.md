@@ -6,8 +6,6 @@ post_title: >
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2013/03/testy-integracji-komponentow-ejb-junit-spring/
 published: true
 post_date: 2013-03-10 00:13:55
 ---
@@ -15,77 +13,77 @@ Nie każdy fragment kodu można zweryfikować za pomocą testów jednostkowych. 
 
 Różnica ta niekoniecznie musi się przekładać na podział technologiczny. Do testów integracji z powodzeniem można zaprząc bibliotekę <a href="http://junit.org/" target="_blank">JUnit</a>. Jeśli testy pokrywają operacje wykorzystujące dobrodziejstwa kontenera EJB (<a href="http://docs.oracle.com/javaee/5/tutorial/doc/bnabo.html#bnabp">http://docs.oracle.com/javaee/5/tutorial/doc/bnabo.html#bnabp</a>), istnieje mało wygodna możliwość osadzenia testów na docelowym serwerze aplikacji (np. <a href="http://www.junitee.org/" target="_blank">JUnit EE</a>), jednak komplikuje to proces wytwarzania, zamiast go wspierać.
 
-Wygodnym podejściem jest natomiast użycie kontenera Spring do zapewnienia, na przykład, transakcyjności czy trwałości. Najprostsza forma realizacji opisanego podejścia zakłada istnienie zaledwie trzech plików: kod klasy testującej, deskryptor dla kontenera Spring oraz deskryptor mechanizmu trwałości (<code>persistance.xml</code>).
+Wygodnym podejściem jest natomiast użycie kontenera Spring do zapewnienia, na przykład, transakcyjności czy trwałości. Najprostsza forma realizacji opisanego podejścia zakłada istnienie zaledwie trzech plików: kod klasy testującej, deskryptor dla kontenera Spring oraz deskryptor mechanizmu trwałości (`persistance.xml`).
 
-[sourcecode lang="xml"]
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;persistence version=&quot;2.0&quot;&gt;
-	&lt;!-- Nazwa jednostki trwalosci --&gt;
-	&lt;persistence-unit name=&quot;film-ejb&quot;&gt;
-		&lt;!-- Dostawca, ja wykorzystuje Hibernate --&gt;
-		&lt;provider&gt;org.hibernate.ejb.HibernatePersistence&lt;/provider&gt;
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0">
+	<!-- Nazwa jednostki trwalosci -->
+	<persistence-unit name="film-ejb">
+		<!-- Dostawca, ja wykorzystuje Hibernate -->
+		<provider>org.hibernate.ejb.HibernatePersistence</provider>
 		
-		&lt;!-- Obslugiwane klasy --&gt;
-		&lt;!-- Konieczne jest uwzglednienie klas bazowych --&gt;
-		&lt;class&gt;pl.ciruk.films.entity.BaseEntity&lt;/class&gt;
-		&lt;class&gt;pl.ciruk.films.entity.User&lt;/class&gt;
-		&lt;class&gt;pl.ciruk.films.entity.Film&lt;/class&gt;
+		<!-- Obslugiwane klasy -->
+		<!-- Konieczne jest uwzglednienie klas bazowych -->
+		<class>pl.ciruk.films.entity.BaseEntity</class>
+		<class>pl.ciruk.films.entity.User</class>
+		<class>pl.ciruk.films.entity.Film</class>
 
-		&lt;!-- Wlasciwosci Hibernate --&gt;
-		&lt;properties&gt;
-			&lt;!-- Sterownik MySQL --&gt;
-			&lt;property name=&quot;hibernate.connection.driver_class&quot; value=&quot;com.mysql.jdbc.Driver&quot;/&gt;
-			&lt;property name=&quot;hibernate.dialect&quot; value=&quot;org.hibernate.dialect.MySQLDialect&quot;/&gt;
+		<!-- Wlasciwosci Hibernate -->
+		<properties>
+			<!-- Sterownik MySQL -->
+			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
 			
-			&lt;!-- Adres URL bazy danych --&gt;
-			&lt;property name=&quot;hibernate.connection.url&quot; value=&quot;jdbc:mysql://host:3306/dbschema&quot;/&gt;
+			<!-- Adres URL bazy danych -->
+			<property name="hibernate.connection.url" value="jdbc:mysql://host:3306/dbschema"/>
 			
-			&lt;!-- Uzytkownik/haslo --&gt;
-			&lt;property name=&quot;hibernate.connection.username&quot; value=&quot;user&quot;/&gt;
-			&lt;property name=&quot;hibernate.connection.password&quot; value=&quot;password&quot;/&gt;
+			<!-- Uzytkownik/haslo -->
+			<property name="hibernate.connection.username" value="user"/>
+			<property name="hibernate.connection.password" value="password"/>
 			
-			&lt;property name=&quot;hibernate.archive.autodetection&quot; value=&quot;class, hbm&quot;/&gt;
-			&lt;property name=&quot;hibernate.show_sql&quot; value=&quot;true&quot;/&gt;
-			&lt;property name=&quot;hibernate.c3p0.min_size&quot; value=&quot;5&quot;/&gt;
-			&lt;property name=&quot;hibernate.c3p0.max_size&quot; value=&quot;20&quot;/&gt;
-			&lt;property name=&quot;hibernate.c3p0.timeout&quot; value=&quot;300&quot;/&gt;
-			&lt;property name=&quot;hibernate.c3p0.max_statements&quot; value=&quot;50&quot;/&gt;
-			&lt;property name=&quot;hibernate.c3p0.idle_test_period&quot; value=&quot;3000&quot;/&gt;
-		&lt;/properties&gt;
-	&lt;/persistence-unit&gt;
-&lt;/persistence&gt;
-[/sourcecode]
+			<property name="hibernate.archive.autodetection" value="class, hbm"/>
+			<property name="hibernate.show_sql" value="true"/>
+			<property name="hibernate.c3p0.min_size" value="5"/>
+			<property name="hibernate.c3p0.max_size" value="20"/>
+			<property name="hibernate.c3p0.timeout" value="300"/>
+			<property name="hibernate.c3p0.max_statements" value="50"/>
+			<property name="hibernate.c3p0.idle_test_period" value="3000"/>
+		</properties>
+	</persistence-unit>
+</persistence>
+```
 
-[sourcecode lang="xml"]
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;beans&gt;
-	&lt;!-- Interfejsy testowanych klas uslugowych EJB --&gt;
-    &lt;bean id=&quot;FilmServiceLocal&quot; class=&quot;pl.ciruk.films.ejb.impl.FilmServiceBean&quot;&gt;&lt;/bean&gt;
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+	<!-- Interfejsy testowanych klas uslugowych EJB -->
+    <bean id="FilmServiceLocal" class="pl.ciruk.films.ejb.impl.FilmServiceBean"></bean>
     
-	&lt;!-- Zarzadca encji --&gt;
-    &lt;bean class=&quot;org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean&quot; id=&quot;entityManagerFactory&quot;&gt;
-		&lt;!-- Nazwa jednostki trwalosci --&gt;
-        &lt;property name=&quot;persistenceUnitName&quot; value=&quot;film-ejb&quot;/&gt;
+	<!-- Zarzadca encji -->
+    <bean class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean" id="entityManagerFactory">
+		<!-- Nazwa jednostki trwalosci -->
+        <property name="persistenceUnitName" value="film-ejb"/>
 		
-		&lt;!-- Wskazanie deskryptora jednostki trwalosci --&gt;
-        &lt;property name=&quot;persistenceXmlLocation&quot; value=&quot;classpath:TEST-INF/persistence.xml&quot;/&gt;
-    &lt;/bean&gt;
+		<!-- Wskazanie deskryptora jednostki trwalosci -->
+        <property name="persistenceXmlLocation" value="classpath:TEST-INF/persistence.xml"/>
+    </bean>
     
-	&lt;!-- Zarzadca transakcji --&gt;
-    &lt;bean class=&quot;org.springframework.orm.jpa.JpaTransactionManager&quot; id=&quot;transactionManager&quot;&gt;
-        &lt;property name=&quot;entityManagerFactory&quot; ref=&quot;entityManagerFactory&quot;/&gt;
-    &lt;/bean&gt;
-&lt;/beans&gt;
-[/sourcecode]
+	<!-- Zarzadca transakcji -->
+    <bean class="org.springframework.orm.jpa.JpaTransactionManager" id="transactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+</beans>
+```
 
-[sourcecode lang="java"]
+```
 //pakiet i importy
 
 // Uruchamianie testu w kontenerze Spring
 @RunWith(SpringJUnit4ClassRunner.class)
 // Wskazanie konfiguracji 
 @ContextConfiguration(locations = {
-	&quot;classpath:/TEST-INF/FilmServiceBeanTest-context.xml&quot;
+	"classpath:/TEST-INF/FilmServiceBeanTest-context.xml"
 }) 
 public class FilmServiceBeanTest {
 
@@ -103,15 +101,15 @@ public class FilmServiceBeanTest {
 		// Nowy testowy film
 		Film f = new Film();
 		f.setInsertionDate(new Date());
-		f.setLabel(&quot;Testowy film&quot;);
-		f.setTitle(&quot;Testowy tytuł&quot;);
+		f.setLabel("Testowy film");
+		f.setTitle("Testowy tytuł");
 		f.setType(FilmType.F);
 		
 		// Zapytanie wyszukujace film na podstawie tytulu i opisu
-		Query query = em.createQuery(&quot;select f from Film f where f.title = :title and f.label = :label&quot;).setParameter(&quot;title&quot;, f.getTitle()).setParameter(&quot;label&quot;, f.getLabel());
+		Query query = em.createQuery("select f from Film f where f.title = :title and f.label = :label").setParameter("title", f.getTitle()).setParameter("label", f.getLabel());
 		
 		// Sprawdzenie, czy nie ma jeszcze w bazie testowego filmu
-		List&lt;Film&gt; films = query.getResultList();
+		List<Film> films = query.getResultList();
 		assertNotNull(films);
 		assertTrue(films.isEmpty());
 		
@@ -126,4 +124,4 @@ public class FilmServiceBeanTest {
 		assertEquals(f, films.get(0));
 	}
 }
-[/sourcecode]
+```

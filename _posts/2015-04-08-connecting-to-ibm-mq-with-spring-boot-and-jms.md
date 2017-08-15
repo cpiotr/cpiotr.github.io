@@ -6,22 +6,20 @@ post_title: >
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2015/04/connecting-to-ibm-mq-with-spring-boot-and-jms/
 published: true
 post_date: 2015-04-08 21:23:17
 ---
 Spring Boot integrates nearly seamlessly with IBM MQ, thanks to its JMS support. Plumbing must be done manually, as usual.
 You can use <a href="https://start.spring.io/" target="_blank">Spring Initializr</a> to generate project's stub for simple application with JMS.
-It's mandatory to place all IBM MQ jars on classpath. The best solution is to add them to local Maven repository and refer to them from build descriptor (e.g. POM file or <code>build.gradle</code>).
+It's mandatory to place all IBM MQ jars on classpath. The best solution is to add them to local Maven repository and refer to them from build descriptor (e.g. POM file or `build.gradle`).
 
-JMS factory beans need to be set up to establish connection. <code>javax.jms.ConnectionFactory</code> is generic factory used by both message producers and consumers. <code>org.springframework.jms.config.DefaultJmsListenerContainerFactory</code> is responsible for message consumer's settings, while <code>org.springframework.jms.core.JmsTemplate</code> can be used for dead simple message producers.
-Session Acknowledge Mode is set to <code>Session.CLIENT_ACKNOWLEDGE</code>, meaning message delivery is acknowledged as a part of transaction. If transaction is rolled back, JMS messsage will be redelivered.
-It is worth noting, that <code>Connection Factory</code> has <code>Transport Type</code> set to <code>WMQConstants.WMQ_CM_CLIENT</code>.
+JMS factory beans need to be set up to establish connection. `javax.jms.ConnectionFactory` is generic factory used by both message producers and consumers. `org.springframework.jms.config.DefaultJmsListenerContainerFactory` is responsible for message consumer's settings, while `org.springframework.jms.core.JmsTemplate` can be used for dead simple message producers.
+Session Acknowledge Mode is set to `Session.CLIENT_ACKNOWLEDGE`, meaning message delivery is acknowledged as a part of transaction. If transaction is rolled back, JMS messsage will be redelivered.
+It is worth noting, that `Connection Factory` has `Transport Type` set to `WMQConstants.WMQ_CM_CLIENT`.
 
-Connection properties are enclosed in a convenience class called <code>MQProperties</code>.
-[sourcecode lang="java"]
-@ConfigurationProperties(prefix = &quot;pl.ciruk.blog.mq&quot;)
+Connection properties are enclosed in a convenience class called `MQProperties`.
+```
+@ConfigurationProperties(prefix = "pl.ciruk.blog.mq")
 @Data
 public class MQProperties {
     String queueManager;
@@ -31,10 +29,10 @@ public class MQProperties {
     String incomingQueue;
     String outgoingQueue;
 }
-[/sourcecode]
+```
 
-They are used to populate connection factory. It it the only bean which is tightly coupled with IBM MQ implementation. Below a <code>MQXAConnectionFactory</code> is used, which is suitable for distributed transactions (XA). If you don't rely on distributed transactions, feel free to use <code>MQConnectionFactory</code> instead.
-[sourcecode lang="java"]
+They are used to populate connection factory. It it the only bean which is tightly coupled with IBM MQ implementation. Below a `MQXAConnectionFactory` is used, which is suitable for distributed transactions (XA). If you don't rely on distributed transactions, feel free to use `MQConnectionFactory` instead.
+```
 @Configuration
 @EnableConfigurationProperties(MQProperties.class)
 public class ConnectionConfiguration {
@@ -58,10 +56,10 @@ public class ConnectionConfiguration {
         return factory;
     }
 }
-[/sourcecode]
+```
 
 Configuration of beans specific for current application is enclosed within separate class to make it easy to replace connection factory for tests. Nearly all beans from the class below depend on previously defined connection factory. 
-[sourcecode lang="java"]
+```
 @Configuration
 @EnableJms
 public class MQConfiguration {
@@ -75,7 +73,7 @@ public class MQConfiguration {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setTransactionManager(transactionManager);
-        factory.setConcurrency(&quot;5-10&quot;);
+        factory.setConcurrency("5-10");
         factory.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
         factory.setSessionTransacted(true);
         return factory;
@@ -88,14 +86,14 @@ public class MQConfiguration {
     }
 
     @Bean
-    public Consumer&lt;String&gt; messageConsumer() {
+    public Consumer<String> messageConsumer() {
         return System.out::println;
     }
 }
-[/sourcecode]
+```
 
 Having defined all beans, it's now high time to use them in concrete service, which serves as both message consumer and producer.
-[sourcecode lang="java"]
+```
 @Named
 @Transactional
 @Slf4j
@@ -104,35 +102,35 @@ public class MQGateway {
 
     private MQProperties properties;
 
-    private Consumer&lt;String&gt; messageConsumer;
+    private Consumer<String> messageConsumer;
 
     @Inject
-    public MQGateway(JmsTemplate jmsTemplate, MQProperties properties, @Named(&quot;messageConsumer&quot;) Consumer&lt;String&gt; messageConsumer) {
+    public MQGateway(JmsTemplate jmsTemplate, MQProperties properties, @Named("messageConsumer") Consumer<String> messageConsumer) {
         this.jmsTemplate = jmsTemplate;
         this.properties = properties;
         this.messageConsumer = messageConsumer;
     }
 
-    @JmsListener(destination = &quot;${pl.ciruk.blog.mq.incoming-queue}&quot;, containerFactory = &quot;defaultJmsListenerContainerFactory&quot;)
+    @JmsListener(destination = "${pl.ciruk.blog.mq.incoming-queue}", containerFactory = "defaultJmsListenerContainerFactory")
     public void onMessage(TextMessage message) throws JMSException {
-        log.info(&quot;onMessage&quot;);
-        log.debug(&quot;onMessage - Message: {}&quot;, message);
+        log.info("onMessage");
+        log.debug("onMessage - Message: {}", message);
 
         try {
             messageConsumer.accept(message.getText());
         } catch (JMSException e) {
-            log.error(&quot;Cannot consume message: {}&quot;, message, e);
+            log.error("Cannot consume message: {}", message, e);
         }
 
     }
 
     public void send(String message) {
-        log.info(&quot;send&quot;);
-        log.debug(&quot;send - Message: {}&quot;, message);
+        log.info("send");
+        log.debug("send - Message: {}", message);
 
         jmsTemplate.convertAndSend(properties.getOutgoingQueue(), message);
     }
 }
-[/sourcecode]
+```
 
 Complete source code can be found on <a href="https://github.com/cpiotr/blog/tree/master/blog-code/src/main/java/pl/ciruk/blog/mq" target="_blank">Github</a>.

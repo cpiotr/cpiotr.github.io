@@ -4,8 +4,6 @@ post_title: Statyczna analiza kodu
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2013/07/statyczna-analiza-kodu/
 published: true
 post_date: 2013-07-17 19:18:25
 ---

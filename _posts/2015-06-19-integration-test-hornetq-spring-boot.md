@@ -6,8 +6,6 @@ post_title: >
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post
-permalink: >
-  http://ciruk.pl/2015/06/integration-test-hornetq-spring-boot/
 published: true
 post_date: 2015-06-19 09:58:27
 ---
@@ -21,22 +19,22 @@ Previously I've described <a href="http://blog.ciruk.pl/2015/04/connecting-to-ib
 <h2>Dependencies</h2>
 HornetQ server will only be needed during tests.
 
-[sourcecode lang="xml"]
-&lt;dependency&gt;
-	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-	&lt;artifactId&gt;spring-boot-starter-hornetq&lt;/artifactId&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-	&lt;groupId&gt;org.hornetq&lt;/groupId&gt;
-	&lt;artifactId&gt;hornetq-jms-server&lt;/artifactId&gt;
-	&lt;scope&gt;test&lt;/scope&gt;
-&lt;/dependency&gt;
-[/sourcecode]
+```
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-hornetq</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.hornetq</groupId>
+	<artifactId>hornetq-jms-server</artifactId>
+	<scope>test</scope>
+</dependency>
+```
 
 <h2>Configuration</h2>
 You may recall basic configuration for setting up connection to IBM MQ from Spring components:
 
-[sourcecode lang="java"]
+```
 @Configuration
 @EnableConfigurationProperties(MQConfiguration.MQProperties.class)
 @EnableJms
@@ -44,7 +42,7 @@ public class MQConfiguration {
         @Inject
         MQConfiguration.MQProperties properties;
  
-        @Bean(name = &quot;DefaultJmsListenerContainerFactory&quot;)
+        @Bean(name = "DefaultJmsListenerContainerFactory")
         public DefaultJmsListenerContainerFactory provideJmsListenerContainerFactory(PlatformTransactionManager transactionManager) {
             DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
             factory.setConnectionFactory(connectionFactory());
@@ -52,7 +50,7 @@ public class MQConfiguration {
             return factory;
         }
  
-        @Bean(name = &quot;JmsTemplate&quot;)
+        @Bean(name = "JmsTemplate")
         public JmsTemplate provideJmsTemplate() {
             JmsTemplate jmsTemplate = new JmsTemplate(connectionFactory());
             return jmsTemplate;
@@ -69,33 +67,33 @@ public class MQConfiguration {
         // ommited
     }
 }
-[/sourcecode]
+```
 
 Configuration shown above must be overridden in order to establish connection to an embedded HornetQ. <a href="http://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-messaging.html" target="_blank">Spring Boot integrates seamlessly with HornetQ</a>, which makes this step fairly easy. It is sufficient to simply rely on default mechanism to shadow the custom one.
 
-[sourcecode lang="java"]
+```
 @Configuration
 public class SDCQueueConfiguration {
 
 	@Inject
 	DefaultJmsListenerContainerFactory jmsListenerContainerFactory;
 
-	@Bean(name = &quot;DefaultJmsListenerContainerFactory&quot;)
+	@Bean(name = "DefaultJmsListenerContainerFactory")
 	public DefaultJmsListenerContainerFactory provideJmsListenerContainerFactory(PlatformTransactionManager transactionManager) {
 		return jmsListenerContainerFactory;
 	}
 
-	@Bean(name = &quot;JmsTemplate&quot;)
+	@Bean(name = "JmsTemplate")
 	public JmsTemplate provideJmsTemplate(ConnectionFactory connectionFactory) {
 		return new JmsTemplate(connectionFactory);
 	}
 }
-[/sourcecode]
+```
 
 <h2>Integration test</h2>
 The test is hardly complicated. First a random message is put to a queue. Then it is expected that MyMessageListener picks it up, process it and stores it in a database. Its presence in the DB is then verified with custom assertion.
 
-[sourcecode lang="java"]
+```
 @RunWith(SpringJUnit4ClassRunner.class)
 @EnableJms
 @EnableAutoConfiguration
@@ -105,7 +103,7 @@ public class MyMessageListenerIT {
 	@Inject
 	JmsTemplate sender;
 
-	@Value(&quot;${pl.ciruk.mq.incoming-queue}&quot;)
+	@Value("${pl.ciruk.mq.incoming-queue}")
 	String requestQueue;
 
 	
@@ -120,7 +118,7 @@ public class MyMessageListenerIT {
 	@Before
 	public void setUp() throws Exception {
 		processingFinished = new CountDownLatch(1);
-		listenerUnderTest.onProcessingComplete(() -&gt; processingFinished.countDown());
+		listenerUnderTest.onProcessingComplete(() -> processingFinished.countDown());
 	}
 
 	@Test
@@ -136,4 +134,4 @@ public class MyMessageListenerIT {
 		assertThat(entityManager, containsQueueMessage(sampleMessage));
 	}
 }
-[/sourcecode]
+```
