@@ -97,7 +97,7 @@ class DealMatchers {
 			@Override
 			protected boolean matchesSafely(Deal item) {
 				return item.tradeType == 2 
-						&amp;&amp; item.sourceIdType.equals("E"),
+						&& item.sourceIdType.equals("E"),
 			}
 		};
 	}

@@ -15,13 +15,13 @@ There is no explicit way to create a collection of classes that implement two in
 public class ConsumerWithPredicates<U> {
         List<Object> consumers = Lists.newArrayList();
 
-        public <T extends Consumer<U> &amp; Predicate<U>> void add(T consumer) {
+        public <T extends Consumer<U> & Predicate<U>> void add(T consumer) {
                 consumers.add(consumer);
         }
 
         public void consume(U element) {
                 consumers.stream()
-                                .map(c -> (Consumer<U> &amp; Predicate<U>) c)
+                                .map(c -> (Consumer<U> & Predicate<U>) c)
                                 .filter(c -> c.test(element))
                                 .forEach(c -> c.accept(element));
         }

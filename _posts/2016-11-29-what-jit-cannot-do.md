@@ -1,6 +1,6 @@
 ---
 ID: 315
-post_title: 'What can&#8217;t JIT do?'
+post_title: What can't JIT do?
 author: Piotr Ciruk
 post_excerpt: ""
 layout: post

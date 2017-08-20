@@ -33,7 +33,7 @@ private Charset guessCharset(InputStream is) {
 		
 		// Czy kodowanie zostalo wykryte z prawdopodobienstwem 
 		// przekraczajacym ustalony prog 
-		if (match != null &amp;&amp; match.getConfidence() > THRESHOLD) {
+		if (match != null && match.getConfidence() > THRESHOLD) {
 			detectedCharset = Charset.forName(match.getName());
 		}
 	} catch (IOException ioe) {
